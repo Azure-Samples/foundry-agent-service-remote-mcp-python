@@ -47,6 +47,8 @@ Run this [azd](https://aka.ms/azd) command to provision the function app, with a
 azd up
 ```
 
+> **Note**: You'll be prompted to specify an `agentLocation` during deployment. This must be one of the AI Foundry supported regions: `westus`, `westus2`, `uaenorth`, `southindia`, or `switzerlandnorth`. This location is used specifically for AI resources (AI Services, Search, Cosmos DB) and can be different from your main deployment location.
+
 Additionally, [API Management]() can be used for improved security and policies over your MCP Server, and [App Service built-in authentication](https://learn.microsoft.com/azure/app-service/overview-authentication-authorization) can be used to set up your favorite OAuth provider including Entra.  
 
 ## Connect to your *remote* MCP server function app from a client
@@ -72,7 +74,7 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
    ```env
    # Azure AI Project Configuration
    PROJECT_ENDPOINT=https://your-agent-service-resource.services.ai.azure.com/api/projects/your-project-name
-   MODEL_DEPLOYMENT_NAME=chat
+   MODEL_DEPLOYMENT_NAME=gpt-4.1-mini
    MCP_SERVER_LABEL=Azure_Functions_MCP_Server
    MCP_SERVER_URL=https://<your-funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse
    USER_MESSAGE=Create a snippet called snippet1 that prints 'Hello, World!' in Python.
