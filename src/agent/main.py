@@ -12,7 +12,7 @@ load_dotenv()
 
 # Configuration constants
 PROJECT_ENDPOINT = os.getenv("PROJECT_ENDPOINT", "https://your-agent-service-resource.services.ai.azure.com/api/projects/your-project-name")
-MODEL_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME", "chat")
+MODEL_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4.1-mini")
 MCP_SERVER_LABEL = os.getenv("MCP_SERVER_LABEL", "Azure_Functions_MCP_Server")
 MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "https://<your-funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse")
 USER_MESSAGE = os.getenv("USER_MESSAGE", "Create a snippet called snippet1 that prints 'Hello, World!' in Python.")
