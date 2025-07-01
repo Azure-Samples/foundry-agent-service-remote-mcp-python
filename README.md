@@ -38,81 +38,13 @@ Below is the architecture diagram for the Remote MCP Server using Azure Function
   + [Visual Studio Code](https://code.visualstudio.com/)
   + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
 
-## Prepare your local environment
 
-An Azure Storage Emulator is needed for this particular sample because we will save and get snippets from blob storage.
+## Deploy Remote MCP Server to Azure
 
-1. Start Azurite
-
-    ```shell
-    docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 \
-        mcr.microsoft.com/azure-storage/azurite
-    ```
-
->**Note** if you use Azurite coming from VS Code extension you need to run `Azurite: Start` now or you will see errors.
-
-## Run your MCP Server locally from the terminal
-
-1. Change to the src/mcp_server folder in a new terminal window:
-
-   ```shell
-   cd src/mcp_server
-   ```
-
-1. Install Python dependencies:
-
-   ```shell
-   pip install -r requirements.txt
-   ```
-
->**Note** it is a best practice to create a Virtual Environment before doing the `pip install` to avoid dependency issues/collisions, or if you are running in CodeSpaces.  See [Python Environments in VS Code](https://code.visualstudio.com/docs/python/environments#_creating-environments) for more information.
-
-1. Start the Functions host locally:
-
-   ```shell
-   func start
-   ```
-
-> **Note** by default this will use the webhooks route: `/runtime/webhooks/mcp/sse`.  Later we will use this in Azure to set the key on client/host calls: `/runtime/webhooks/mcp/sse?code=<system_key>`
-
-## Connect to the *local* MCP server from a client/host
-
-### Foundry Agent Service Client
-
-The Foundry Agent Service is a cloud service that expects MCP tools that are also in the cloud (e.g. same VNET or on public internet).  Proceed to the steps around deploying the Azure for Remote MCP.
-
-### MCP Inspector
-
-1. In a **new terminal window**, install and run MCP Inspector
-
-    ```shell
-    npx @modelcontextprotocol/inspector
-    ```
-
-2. CTRL click to load the MCP Inspector web app from the URL displayed by the app (e.g. http://0.0.0.0:5173/#resources)
-3. Set the transport type to `SSE`
-4. Set the URL to your running Function app's SSE endpoint and **Connect**:
-
-    ```shell
-    http://0.0.0.0:7071/runtime/webhooks/mcp/sse
-    ```
-
->**Note** this step will not work in CodeSpaces.  Please move on to Deploy to Remote MCP.  
-
-
-
-## Deploy to Azure for Remote MCP
-
-Run this [azd](https://aka.ms/azd) command to provision the function app, with any required Azure resources, and deploy your code:
+Run this [azd](https://aka.ms/azd) command to provision the function app, with any required Azure resources including AI Foundry Agent Service, and deploy your code:
 
 ```shell
 azd up
-```
-
-You can opt-in to a VNet being used in the sample. To do so, do this before `azd up`
-
-```bash
-azd env set VNET_ENABLED true
 ```
 
 Additionally, [API Management]() can be used for improved security and policies over your MCP Server, and [App Service built-in authentication](https://learn.microsoft.com/azure/app-service/overview-authentication-authorization) can be used to set up your favorite OAuth provider including Entra.  
@@ -208,6 +140,68 @@ az webapp log tail --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP
 # Redeploy the application without provisioning new resources
 azd deploy
 ```
+
+## Prepare your local environment
+
+An Azure Storage Emulator is needed for this particular sample because we will save and get snippets from blob storage.
+
+1. Start Azurite
+
+    ```shell
+    docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 \
+        mcr.microsoft.com/azure-storage/azurite
+    ```
+
+>**Note** if you use Azurite coming from VS Code extension you need to run `Azurite: Start` now or you will see errors.
+
+## Run your MCP Server locally from the terminal
+
+1. Change to the src/mcp_server folder in a new terminal window:
+
+   ```shell
+   cd src/mcp_server
+   ```
+
+1. Install Python dependencies:
+
+   ```shell
+   pip install -r requirements.txt
+   ```
+
+>**Note** it is a best practice to create a Virtual Environment before doing the `pip install` to avoid dependency issues/collisions, or if you are running in CodeSpaces.  See [Python Environments in VS Code](https://code.visualstudio.com/docs/python/environments#_creating-environments) for more information.
+
+1. Start the Functions host locally:
+
+   ```shell
+   func start
+   ```
+
+> **Note** by default this will use the webhooks route: `/runtime/webhooks/mcp/sse`.  Later we will use this in Azure to set the key on client/host calls: `/runtime/webhooks/mcp/sse?code=<system_key>`
+
+## Connect to the *local* MCP server from a client/host
+
+### Foundry Agent Service Client
+
+The Foundry Agent Service is a cloud service that expects MCP tools that are also in the cloud (e.g. same VNET or on public internet).  Proceed to the steps around deploying the Azure for Remote MCP.
+
+### MCP Inspector
+
+1. In a **new terminal window**, install and run MCP Inspector
+
+    ```shell
+    npx @modelcontextprotocol/inspector
+    ```
+
+2. CTRL click to load the MCP Inspector web app from the URL displayed by the app (e.g. http://0.0.0.0:5173/#resources)
+3. Set the transport type to `SSE`
+4. Set the URL to your running Function app's SSE endpoint and **Connect**:
+
+    ```shell
+    http://0.0.0.0:7071/runtime/webhooks/mcp/sse
+    ```
+
+>**Note** this step will not work in CodeSpaces.  Please move on to Deploy to Remote MCP.  
+
 
 ## Source Code
 
