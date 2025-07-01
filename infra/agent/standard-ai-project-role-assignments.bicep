@@ -134,6 +134,24 @@ resource cosmosDbOperatorRoleAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
+// Assign AI Project the Cosmos DB Built-in Data Contributor Role at database level
+
+var cosmosDbBuiltinDataContributorRoleDefinitionId = resourceId(
+  'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions',
+  cosmosDbAccount.name,
+  '00000000-0000-0000-0000-000000000002'
+)
+
+resource cosmosDbBuiltinDataContributorRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-05-15' = {
+  parent: cosmosDbAccount
+  name: guid(aiProjectPrincipalId, cosmosDbBuiltinDataContributorRoleDefinitionId, cosmosDbAccount.id)
+  properties: {
+    principalId: aiProjectPrincipalId
+    roleDefinitionId: cosmosDbBuiltinDataContributorRoleDefinitionId
+    scope: cosmosDbAccount.id
+  }
+}
+
 // Assignments for Storage Account
 // ------------------------------------------------------------------
 
