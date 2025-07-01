@@ -10,13 +10,16 @@ languages:
 products:
 - azure-functions
 - azure
-urlFragment: remote-mcp-functions-python
+- entra-id
+- azure-openai
+- ai-foundry
+urlFragment: foundry-agent-service-remote-mcp-python
 ---
 -->
 
-# Getting Started with Remote MCP Servers using Azure Functions (Python)
+# Getting Started with Agent Service and Remote MCP Servers (Python)
 
-This is a quickstart template to easily build and deploy a custom remote MCP server to the cloud using Azure Functions with Python. You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes. The MCP server is secured by design using keys and HTTPS, and allows more options for OAuth using built-in auth and/or [API Management](https://aka.ms/mcp-remote-apim-auth) as well as network isolation using VNET.
+This is a quickstart template to easily run an [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/) client and then add a custom remote MCP server to the cloud using [Azure Functions Remote MCP](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-mcp?pivots=programming-language-python). You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes. The MCP server is secured by design using keys and HTTPS, and allows more options for OAuth using built-in auth and/or [API Management](https://aka.ms/mcp-remote-apim-auth) as well as network isolation using VNET.
 
 If you're looking for this sample in more languages check out the [.NET/C#](https://github.com/Azure-Samples/remote-mcp-functions-dotnet) and [Node.js/TypeScript](https://github.com/Azure-Samples/remote-mcp-functions-typescript) versions.
 
