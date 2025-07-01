@@ -129,28 +129,27 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.1.1' = {
   }
 }
 
-module api './app/api.bicep' = {
-  name: 'api'
+// Monitor application with Azure Monitor - Log Analytics and Application Insights
+module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.11.1' = {
+  name: '${uniqueString(deployment().name, location)}-loganalytics'
   scope: rg
   params: {
-    name: functionAppName
+    name: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
     location: location
     tags: tags
-    applicationInsightsName: monitoring.outputs.name
-    appServicePlanId: appServicePlan.outputs.resourceId
-    runtimeName: 'python'
-    runtimeVersion: '3.12'
-    storageAccountName: storage.outputs.name
-    enableBlob: storageEndpointConfig.enableBlob
-    enableQueue: storageEndpointConfig.enableQueue
-    enableTable: storageEndpointConfig.enableTable
-    deploymentStorageContainerName: deploymentStorageContainerName
-    identityId: apiUserAssignedIdentity.outputs.resourceId
-    identityClientId: apiUserAssignedIdentity.outputs.clientId
-    appSettings: {
-      PROJECT_ENDPOINT: aiProject.outputs.projectEndpoint
-    }
-    virtualNetworkSubnetId: vnetEnabled ? serviceVirtualNetwork.outputs.appSubnetID : ''
+    dataRetention: 30
+  }
+}
+ 
+module monitoring 'br/public:avm/res/insights/component:0.6.0' = {
+  name: '${uniqueString(deployment().name, location)}-appinsights'
+  scope: rg
+  params: {
+    name: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
+    location: location
+    tags: tags
+    workspaceResourceId: logAnalytics.outputs.resourceId
+    disableLocalAuth: true
   }
 }
 
@@ -177,81 +176,6 @@ module storage 'br/public:avm/res/storage/storage-account:0.8.3' = {
     minimumTlsVersion: 'TLS1_2'  // Enforcing TLS 1.2 for better security
     location: location
     tags: tags
-  }
-}
-
-// Define the configuration object locally to pass to the modules
-var storageEndpointConfig = {
-  enableBlob: true  // Required for AzureWebJobsStorage, .zip deployment, Event Hubs trigger and Timer trigger checkpointing
-  enableQueue: true  // Required for Durable Functions and MCP trigger
-  enableTable: false  // Required for Durable Functions and OpenAI triggers and bindings
-  enableFiles: false   // Not required, used in legacy scenarios
-  allowUserIdentityPrincipal: true   // Allow interactive user identity to access for testing and debugging
-}
-
-// Consolidated Role Assignments
-module rbac 'app/rbac.bicep' = {
-  name: 'rbacAssignments'
-  scope: rg
-  params: {
-    storageAccountName: storage.outputs.name
-    appInsightsName: monitoring.outputs.name
-    managedIdentityPrincipalId: apiUserAssignedIdentity.outputs.principalId
-    userIdentityPrincipalId: principalId
-    enableBlob: storageEndpointConfig.enableBlob
-    enableQueue: storageEndpointConfig.enableQueue
-    enableTable: storageEndpointConfig.enableTable
-    allowUserIdentityPrincipal: storageEndpointConfig.allowUserIdentityPrincipal
-  }
-}
-
-// Virtual Network & private endpoint to blob storage
-module serviceVirtualNetwork 'app/vnet.bicep' =  if (vnetEnabled) {
-  name: 'serviceVirtualNetwork'
-  scope: rg
-  params: {
-    location: location
-    tags: tags
-    vNetName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
-  }
-}
-
-module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnabled) {
-  name: 'servicePrivateEndpoint'
-  scope: rg
-  params: {
-    location: location
-    tags: tags
-    virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
-    subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
-    resourceName: storage.outputs.name
-    enableBlob: storageEndpointConfig.enableBlob
-    enableQueue: storageEndpointConfig.enableQueue
-    enableTable: storageEndpointConfig.enableTable
-  }
-}
-
-// Monitor application with Azure Monitor - Log Analytics and Application Insights
-module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.11.1' = {
-  name: '${uniqueString(deployment().name, location)}-loganalytics'
-  scope: rg
-  params: {
-    name: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
-    location: location
-    tags: tags
-    dataRetention: 30
-  }
-}
- 
-module monitoring 'br/public:avm/res/insights/component:0.6.0' = {
-  name: '${uniqueString(deployment().name, location)}-appinsights'
-  scope: rg
-  params: {
-    name: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
-    location: location
-    tags: tags
-    workspaceResourceId: logAnalytics.outputs.resourceId
-    disableLocalAuth: true
   }
 }
 
@@ -307,6 +231,31 @@ module aiProject './agent/standard-ai-project.bicep' = {
   }
 }
 
+module api './app/api.bicep' = {
+  name: 'api'
+  scope: rg
+  params: {
+    name: functionAppName
+    location: location
+    tags: tags
+    applicationInsightsName: monitoring.outputs.name
+    appServicePlanId: appServicePlan.outputs.resourceId
+    runtimeName: 'python'
+    runtimeVersion: '3.12'
+    storageAccountName: storage.outputs.name
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
+    deploymentStorageContainerName: deploymentStorageContainerName
+    identityId: apiUserAssignedIdentity.outputs.resourceId
+    identityClientId: apiUserAssignedIdentity.outputs.clientId
+    appSettings: {
+      PROJECT_ENDPOINT: aiProject.outputs.projectEndpoint
+    }
+    virtualNetworkSubnetId: vnetEnabled ? serviceVirtualNetwork.outputs.appSubnetID : ''
+  }
+}
+
 module projectRoleAssignments './agent/standard-ai-project-role-assignments.bicep' = {
   name: 'aiprojectroleassignments${projectName}${uniqueSuffix}deployment'
   scope: rg
@@ -348,6 +297,57 @@ module postCapabilityHostCreationRoleAssignments './agent/post-capability-host-r
   dependsOn: [ aiProjectCapabilityHost ]
 }
 
+// Define the configuration object locally to pass to the modules
+var storageEndpointConfig = {
+  enableBlob: true  // Required for AzureWebJobsStorage, .zip deployment, Event Hubs trigger and Timer trigger checkpointing
+  enableQueue: true  // Required for Durable Functions and MCP trigger
+  enableTable: false  // Required for Durable Functions and OpenAI triggers and bindings
+  enableFiles: false   // Not required, used in legacy scenarios
+  allowUserIdentityPrincipal: true   // Allow interactive user identity to access for testing and debugging
+}
+
+// Consolidated Role Assignments
+module rbac 'app/rbac.bicep' = {
+  name: 'rbacAssignments'
+  scope: rg
+  params: {
+    storageAccountName: storage.outputs.name
+    appInsightsName: monitoring.outputs.name
+    managedIdentityPrincipalId: apiUserAssignedIdentity.outputs.principalId
+    userIdentityPrincipalId: principalId
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
+    allowUserIdentityPrincipal: storageEndpointConfig.allowUserIdentityPrincipal
+  }
+}
+
+// Virtual Network & private endpoint to blob storage
+module serviceVirtualNetwork 'app/vnet.bicep' =  if (vnetEnabled) {
+  name: 'serviceVirtualNetwork'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    vNetName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
+  }
+}
+
+module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnabled) {
+  name: 'servicePrivateEndpoint'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
+    subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
+    resourceName: storage.outputs.name
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
+  }
+}
+
 // App outputs
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.connectionString
 output AZURE_LOCATION string = location
@@ -358,3 +358,4 @@ output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 // AI Foundry outputs
 output PROJECT_ENDPOINT string = aiProject.outputs.projectEndpoint
 output MODEL_DEPLOYMENT_NAME string = modelName
+output MCP_SERVER_URL string = 'https://${api.outputs.SERVICE_API_NAME}.azurewebsites.net/runtime/webhooks/mcp/sse'
