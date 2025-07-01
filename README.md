@@ -141,7 +141,7 @@ az webapp log tail --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP
 azd deploy
 ```
 
-## Prepare your local environment
+## Debugging MCP server function locally
 
 An Azure Storage Emulator is needed for this particular sample because we will save and get snippets from blob storage.
 
