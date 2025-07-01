@@ -8,6 +8,9 @@
     "location": {
       "value": "${AZURE_LOCATION}"
     },
+    "agentLocation": {
+      "value": "${AZURE_AGENT_LOCATION}"
+    },
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
     },

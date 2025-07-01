@@ -9,11 +9,37 @@ param environmentName string
 @description('Primary location for all resources & Flex Consumption Function App')
 @allowed([
   'australiaeast'
+  'australiasoutheast'
+  'brazilsouth'
+  'canadacentral'
+  'centralindia'
+  'centralus'
+  'eastasia'
   'eastus'
   'eastus2'
+  'eastus2euap'
+  'francecentral'
+  'germanywestcentral'
+  'italynorth'
+  'japaneast'
+  'koreacentral'
+  'northcentralus'
+  'northeurope'
+  'norwayeast'
+  'southafricanorth'
   'southcentralus'
   'southeastasia'
+  'southindia'
+  'spaincentral'
+  'swedencentral'
+  'uaenorth'
   'uksouth'
+  'ukwest'
+  'westcentralus'
+  'westeurope'
+  'westus'
+  'westus2'
+  'westus3'
 ])
 @metadata({
   azd: {
@@ -21,6 +47,17 @@ param environmentName string
   }
 })
 param location string
+
+@description('Location for AI Foundry resources (AI Services, Search, Cosmos DB, etc.)')
+@allowed([
+  'westus'
+  'westus2'
+  'uaenorth'
+  'southindia'
+  'switzerlandnorth'
+])
+param agentLocation string
+
 param vnetEnabled bool
 param apiServiceName string = ''
 param apiUserAssignedIdentityName string = ''
@@ -184,7 +221,7 @@ module aiDependencies './agent/standard-dependent-resources.bicep' = {
   name: 'dependencies${projectName}${uniqueSuffix}deployment'
   scope: rg
   params: {
-    location: location
+    location: agentLocation
     storageName: 'st${uniqueSuffix}'
     aiServicesName: '${aiServicesName}${uniqueSuffix}'
     aiSearchName: '${aiSearchName}${uniqueSuffix}'
@@ -197,7 +234,7 @@ module aiDependencies './agent/standard-dependent-resources.bicep' = {
      modelVersion: modelVersion
      modelSkuName: modelSkuName
      modelCapacity: modelCapacity  
-     modelLocation: location
+     modelLocation: agentLocation
 
      aiServiceAccountResourceId: aiServiceAccountResourceId
      aiSearchServiceResourceId: aiSearchServiceResourceId
@@ -215,7 +252,7 @@ module aiProject './agent/standard-ai-project.bicep' = {
     aiProjectName: '${projectName}${uniqueSuffix}'
     aiProjectFriendlyName: aiProjectFriendlyName
     aiProjectDescription: aiProjectDescription
-    location: location
+    location: agentLocation
     tags: tags
     
     // dependent resources
