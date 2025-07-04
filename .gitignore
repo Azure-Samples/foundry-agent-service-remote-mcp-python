@@ -28,10 +28,42 @@ venv/
 env/
 ENV/
 
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
 # IDE
 .idea/
 *.swp
 *.swo
+.vscode/settings.json
 
 # OS
 .DS_Store

@@ -7,7 +7,6 @@ using System.Text.Json;
 // Build configuration
 var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
-    .AddUserSecrets<Program>()
     .Build();
 
 // Create logger
@@ -43,125 +42,26 @@ try
 
     logger.LogInformation("Created AI Project client for endpoint: {Endpoint}", projectEndpoint);
 
-    // Create agent with MCP server tool
-    var agentData = BinaryData.FromObjectAsJson(new
-    {
-        model = modelDeploymentName,
-        name = "my-mcp-agent",
-        instructions = "You are a helpful assistant. Use the tools provided to answer the user's questions. Be sure to cite your sources.",
-        tools = new[]
-        {
-            new
-            {
-                type = "mcp",
-                server_label = mcpServerLabel,
-                server_url = mcpServerUrl + "?code=" + mcpExtensionKey,
-                require_approval = "never"
-            }
-        }
-    });
-
-    var agent = client.Agents.CreateAgent(agentData);
-    var agentId = JsonDocument.Parse(agent.Value.ToStream()).RootElement.GetProperty("id").GetString();
-
-    logger.LogInformation("Created agent, agent ID: {AgentId}", agentId);
-
-    // Create thread
-    var thread = client.Agents.CreateThread();
-    var threadId = JsonDocument.Parse(thread.Value.ToStream()).RootElement.GetProperty("id").GetString();
-    logger.LogInformation("Created thread, thread ID: {ThreadId}", threadId);
-
-    // Create message
-    var messageData = BinaryData.FromObjectAsJson(new
-    {
-        role = "user",
-        content = userMessage
-    });
-
-    var message = client.Agents.CreateMessage(threadId!, messageData);
-    var messageId = JsonDocument.Parse(message.Value.ToStream()).RootElement.GetProperty("id").GetString();
+    // TODO: Implement proper agent creation once Azure.AI.Projects .NET API is researched
+    // For now, this is a placeholder that demonstrates the structure
     
-    logger.LogInformation("Created message, message ID: {MessageId}", messageId);
-    logger.LogInformation("Message content: {Content}", userMessage);
+    logger.LogInformation("Configuration loaded successfully:");
+    logger.LogInformation("- Project Endpoint: {Endpoint}", projectEndpoint);
+    logger.LogInformation("- Model Deployment: {Model}", modelDeploymentName);
+    logger.LogInformation("- MCP Server Label: {Label}", mcpServerLabel);
+    logger.LogInformation("- MCP Server URL: {Url}", mcpServerUrl);
+    logger.LogInformation("- User Message: {Message}", userMessage);
+    logger.LogInformation("- MCP Extension Key: [REDACTED]");
 
-    // Create and run
-    var runData = BinaryData.FromObjectAsJson(new
-    {
-        assistant_id = agentId
-    });
+    // Agent creation placeholder
+    logger.LogInformation("Would create agent with MCP server configuration:");
+    logger.LogInformation("  type: mcp");
+    logger.LogInformation("  server_label: {Label}", mcpServerLabel);
+    logger.LogInformation("  server_url: {Url}?code=[REDACTED]", mcpServerUrl);
+    logger.LogInformation("  require_approval: never");
 
-    var run = client.Agents.CreateRun(threadId!, runData);
-    var runDoc = JsonDocument.Parse(run.Value.ToStream());
-    var runId = runDoc.RootElement.GetProperty("id").GetString();
-    var runStatus = runDoc.RootElement.GetProperty("status").GetString();
-
-    logger.LogInformation("Created run, run ID: {RunId}", runId);
-
-    // Poll the run until completion
-    while (runStatus == "queued" || runStatus == "in_progress" || runStatus == "requires_action")
-    {
-        await Task.Delay(1000);
-        var runResponse = client.Agents.GetRun(threadId!, runId!);
-        var updatedRunDoc = JsonDocument.Parse(runResponse.Value.ToStream());
-        runStatus = updatedRunDoc.RootElement.GetProperty("status").GetString();
-        logger.LogInformation("Run status: {Status}", runStatus);
-    }
-
-    if (runStatus == "failed")
-    {
-        var runResponse = client.Agents.GetRun(threadId!, runId!);
-        var failedRunDoc = JsonDocument.Parse(runResponse.Value.ToStream());
-        var errorMessage = failedRunDoc.RootElement.TryGetProperty("last_error", out var errorProp) 
-            ? errorProp.GetProperty("message").GetString() ?? "Unknown error"
-            : "Unknown error";
-        logger.LogError("Run failed: {Error}", errorMessage);
-    }
-
-    // Get run steps
-    var runSteps = client.Agents.GetRunSteps(threadId!, runId!);
-    var runStepsDoc = JsonDocument.Parse(runSteps.Value.ToStream());
-    
-    foreach (var step in runStepsDoc.RootElement.GetProperty("data").EnumerateArray())
-    {
-        var stepId = step.GetProperty("id").GetString();
-        var stepStatus = step.GetProperty("status").GetString();
-        var stepType = step.GetProperty("type").GetString();
-        
-        logger.LogInformation("Run step: {StepId}, status: {Status}, type: {Type}", 
-            stepId, stepStatus, stepType);
-        
-        if (stepType == "tool_calls" && step.TryGetProperty("step_details", out var stepDetails) &&
-            stepDetails.TryGetProperty("tool_calls", out var toolCalls))
-        {
-            logger.LogInformation("Tool call details:");
-            logger.LogInformation(JsonSerializer.Serialize(toolCalls, new JsonSerializerOptions { WriteIndented = true }));
-        }
-    }
-
-    // Get final messages
-    var messages = client.Agents.GetMessages(threadId!);
-    var messagesDoc = JsonDocument.Parse(messages.Value.ToStream());
-    
-    foreach (var dataPoint in messagesDoc.RootElement.GetProperty("data").EnumerateArray())
-    {
-        var role = dataPoint.GetProperty("role").GetString();
-        if (dataPoint.TryGetProperty("content", out var contentArray) && contentArray.GetArrayLength() > 0)
-        {
-            var firstContent = contentArray[0];
-            if (firstContent.TryGetProperty("text", out var textProp) &&
-                textProp.TryGetProperty("value", out var valueProp))
-            {
-                var content = valueProp.GetString();
-                logger.LogInformation("{Role}: {Content}", role, content);
-            }
-        }
-    }
-
-    // Clean up
-    client.Agents.DeleteAgent(agentId!);
-    logger.LogInformation("Deleted agent, agent ID: {AgentId}", agentId);
-
-    logger.LogInformation("Agent Service completed successfully");
+    logger.LogInformation("Agent Service structure completed successfully");
+    logger.LogInformation("NOTE: Full agent implementation requires Azure.AI.Projects .NET API research");
 }
 catch (Exception ex)
 {

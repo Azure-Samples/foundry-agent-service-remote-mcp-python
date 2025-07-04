@@ -4,13 +4,29 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": ".NET Agent Client",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/Agent/bin/Debug/net8.0/Agent.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/Agent",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/src/Agent/.env"
+        },
+        {
+            "name": ".NET MCP Server (Attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
         }
     ]
 }

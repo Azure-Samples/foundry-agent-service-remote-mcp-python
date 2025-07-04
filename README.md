@@ -17,9 +17,16 @@ urlFragment: foundry-agent-service-remote-mcp-python
 ---
 -->
 
-# Getting Started with Agent Service and Remote MCP Servers (Python)
+# Getting Started with Agent Service and Remote MCP Servers
 
-This is a quickstart template to easily run an [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/) client and then add a custom remote MCP server to the cloud using [Azure Functions Remote MCP](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-mcp?pivots=programming-language-python). You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes. The MCP server is secured by design using keys and HTTPS, and allows more options for OAuth using built-in auth and/or [API Management](https://aka.ms/mcp-remote-apim-auth) as well as network isolation using VNET.
+This repository contains implementations for an [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/) client with a custom remote MCP server using [Azure Functions Remote MCP](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-mcp). You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes. The MCP server is secured by design using keys and HTTPS, and allows more options for OAuth using built-in auth and/or [API Management](https://aka.ms/mcp-remote-apim-auth) as well as network isolation using VNET.
+
+## Language Implementations
+
+This repository contains implementations in multiple languages:
+
+- **Python** (Original): `src/agent/` and `src/mcp_server/`
+- **.NET/C#** (Ported): `src/Agent/` and `src/McpServer/`
 
 If you're looking for this sample in more languages check out the [.NET/C#](https://github.com/Azure-Samples/remote-mcp-functions-dotnet) and [Node.js/TypeScript](https://github.com/Azure-Samples/remote-mcp-functions-typescript) versions.
 
@@ -31,11 +38,21 @@ Below is the architecture diagram for the Remote MCP Server using Azure Function
 
 ## Prerequisites
 
+### Python Implementation
 + [Python](https://www.python.org/downloads/) version 3.11 or higher
 + [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local?pivots=programming-language-python#install-the-azure-functions-core-tools) >= `4.0.7030`
 + [Azure Developer CLI](https://aka.ms/azd)
 + To use Visual Studio Code to run and debug locally:
   + [Visual Studio Code](https://code.visualstudio.com/)
+  + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
+
+### .NET Implementation
++ [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or higher
++ [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local#install-the-azure-functions-core-tools) >= `4.0.7030`
++ [Azure Developer CLI](https://aka.ms/azd)
++ To use Visual Studio Code to run and debug locally:
+  + [Visual Studio Code](https://code.visualstudio.com/)
+  + [C# extension](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp)
   + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
 
 
@@ -102,6 +119,48 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
 
    The agent will connect to your remote MCP server and execute the message specified in the `USER_MESSAGE` environment variable, demonstrating the integration between Azure AI Foundry and your deployed MCP server.
 
+### .NET Agent Service Client
+
+1. Change to the .NET agent folder in a new terminal window:
+
+   ```shell
+   cd src/Agent
+   ```
+
+2. Create a `.env` file based on the example provided. Copy the `.env.example` file:
+
+   ```shell
+   cp .env.example .env
+   ```
+
+3. Edit the `.env` file with your deployed function app details (same format as Python):
+
+   ```env
+   # Azure AI Project Configuration
+   PROJECT_ENDPOINT=https://your-agent-service-resource.services.ai.azure.com/api/projects/your-project-name
+   MODEL_DEPLOYMENT_NAME=gpt-4.1-mini
+   MCP_SERVER_LABEL=Azure_Functions_MCP_Server
+   MCP_SERVER_URL=https://<your-funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse
+   USER_MESSAGE=Create a snippet called snippet1 that prints 'Hello, World!' in Python.
+
+   # Required: Azure Functions extension key for MCP server authentication
+   MCP_EXTENSION_KEY=your_mcp_extension_system_key_here
+   ```
+
+4. Restore .NET dependencies for the agent:
+
+   ```shell
+   dotnet restore
+   ```
+
+5. Run the .NET agent service:
+
+   ```shell
+   dotnet run
+   ```
+
+   **Note**: The .NET implementation currently provides configuration validation and structure setup. Full agent functionality requires completion of Azure.AI.Projects .NET API integration.
+
 ### Connect to remote MCP server in MCP Inspector
 For MCP Inspector, you can include the key in the URL: 
 ```plaintext
@@ -158,13 +217,15 @@ An Azure Storage Emulator is needed for this particular sample because we will s
 
 ## Run your MCP Server locally from the terminal
 
+### Python MCP Server
+
 1. Change to the src/mcp_server folder in a new terminal window:
 
    ```shell
    cd src/mcp_server
    ```
 
-1. Install Python dependencies:
+2. Install Python dependencies:
 
    ```shell
    pip install -r requirements.txt
@@ -172,7 +233,27 @@ An Azure Storage Emulator is needed for this particular sample because we will s
 
 >**Note** it is a best practice to create a Virtual Environment before doing the `pip install` to avoid dependency issues/collisions, or if you are running in CodeSpaces.  See [Python Environments in VS Code](https://code.visualstudio.com/docs/python/environments#_creating-environments) for more information.
 
-1. Start the Functions host locally:
+3. Start the Functions host locally:
+
+   ```shell
+   func start
+   ```
+
+### .NET MCP Server
+
+1. Change to the src/McpServer folder in a new terminal window:
+
+   ```shell
+   cd src/McpServer
+   ```
+
+2. Restore .NET dependencies:
+
+   ```shell
+   dotnet restore
+   ```
+
+3. Start the Functions host locally:
 
    ```shell
    func start
