@@ -21,7 +21,7 @@ urlFragment: foundry-agent-service-remote-mcp-dotnet
 
 This is a quickstart template to easily run an [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/) client and then add a custom remote MCP server to the cloud using [Azure Functions Remote MCP](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-mcp?pivots=programming-language-csharp). You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes. The MCP server is secured by design using keys and HTTPS, and allows more options for OAuth using built-in auth and/or [API Management](https://aka.ms/mcp-remote-apim-auth) as well as network isolation using VNET.
 
-If you're looking for this sample in more languages check out the [Python](https://github.com/Azure-Samples/foundry-agent-service-remote-mcp-python) and [Node.js/TypeScript](https://github.com/Azure-Samples/remote-mcp-functions-typescript) versions.
+If you're looking for this sample in more languages check out the [Python](https://github.com/Azure-Samples/foundry-agent-service-remote-mcp-python) and [Node.js/TypeScript](https://github.com/Azure-Samples/foundry-agent-service-remote-mcp-typescript) versions.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/foundry-agent-service-remote-mcp-dotnet)
 
@@ -67,7 +67,11 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
 2. Create an `appsettings.json` file based on the example provided. Copy the `appsettings.example.json` file:
 
    ```shell
+   # Windows
    copy appsettings.example.json appsettings.json
+   
+   # Linux/macOS
+   cp appsettings.example.json appsettings.json
    ```
 
 3. Edit the `appsettings.json` file with your deployed function app details:
@@ -213,7 +217,7 @@ The Foundry Agent Service is a cloud service that expects MCP tools that are als
 
 The function code for the `get_snippet` and `save_snippet` endpoints are defined in the C# files in the `src/MCPServer` directory. The MCP function annotations expose these functions as MCP Server tools.
 
-Here's the actual code from the Program.cs file:
+The Program.cs file sets up the Azure Functions host:
 
 ```csharp
 using Microsoft.Azure.Functions.Worker;
@@ -232,75 +236,92 @@ var host = new HostBuilder()
 host.Run();
 ```
 
-And the MCP functions in MCPFunctions.cs:
+Here's the actual code from the FunctionApp.cs file:
 
 ```csharp
-using System.Net;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace MCPServer
 {
-    public class MCPFunctions
+    public class FunctionApp
     {
         private readonly ILogger _logger;
+        private const string BlobPath = "snippets/{name}.txt";
+        private const string SnippetNameProperty = "name";
+        private const string SnippetContentProperty = "snippet";
 
-        public MCPFunctions(ILoggerFactory loggerFactory)
+        public FunctionApp(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<MCPFunctions>();
+            _logger = loggerFactory.CreateLogger<FunctionApp>();
         }
 
         [Function("Hello")]
-        [MCPTool("hello", "Hello world.")]
-        public async Task<string> Hello([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+        [MCPToolTrigger("hello", "Hello world.", "[]")]
+        public string HelloMcp([MCPToolTrigger] object context)
         {
-            _logger.LogInformation("Hello MCP tool called.");
+            /// <summary>
+            /// A simple function that returns a greeting message.
+            /// </summary>
+            /// <param name="context">The trigger context (not used in this function).</param>
+            /// <returns>A greeting message.</returns>
             return "Hello I am MCPTool!";
         }
 
         [Function("GetSnippet")]
-        [MCPTool("getsnippet", "Retrieve a snippet by name.", @"[{""name"": ""snippetName"", ""type"": ""string"", ""description"": ""The name of the snippet to retrieve"", ""required"": true}]")]
-        public async Task<string> GetSnippet(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
-            [BlobInput("snippets/{snippetName}.txt", Connection = "AzureWebJobsStorage")] string snippetContent)
+        [MCPToolTrigger("getsnippet", "Retrieve a snippet by name.", 
+            @"[{""name"": ""name"", ""type"": ""string"", ""description"": ""The name of the snippet to retrieve"", ""required"": true}]")]
+        public string GetSnippet(
+            [MCPToolTrigger] object context,
+            [BlobInput(BlobPath, Connection = "AzureWebJobsStorage")] string file)
         {
-            if (string.IsNullOrEmpty(snippetContent))
+            /// <summary>
+            /// Retrieves a snippet by name from Azure Blob Storage.
+            /// </summary>
+            /// <param name="file">The input binding to read the snippet from Azure Blob Storage.</param>
+            /// <param name="context">The trigger context containing the input arguments.</param>
+            /// <returns>The content of the snippet or an error message.</returns>
+            
+            if (string.IsNullOrEmpty(file))
             {
                 return "Snippet not found";
             }
 
-            _logger.LogInformation($"Retrieved snippet: {snippetContent}");
-            return snippetContent;
+            _logger.LogInformation($"Retrieved snippet: {file}");
+            return file;
         }
 
         [Function("SaveSnippet")]
-        [MCPTool("savesnippet", "Save a snippet with a name.", @"[{""name"": ""snippetName"", ""type"": ""string"", ""description"": ""The name of the snippet"", ""required"": true}, {""name"": ""content"", ""type"": ""string"", ""description"": ""The content of the snippet"", ""required"": true}]")]
-        public async Task<string> SaveSnippet(
-            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req,
-            [BlobOutput("snippets/{snippetName}.txt", Connection = "AzureWebJobsStorage")] out string snippetContent)
+        [MCPToolTrigger("savesnippet", "Save a snippet with a name.",
+            @"[{""name"": ""name"", ""type"": ""string"", ""description"": ""The name of the snippet"", ""required"": true}, 
+               {""name"": ""snippet"", ""type"": ""string"", ""description"": ""The content of the snippet"", ""required"": true}]")]
+        public string SaveSnippet(
+            [MCPToolTrigger] object context,
+            [BlobOutput(BlobPath, Connection = "AzureWebJobsStorage")] out string file)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            var content = JsonSerializer.Deserialize<JsonElement>(context.ToString());
+            var arguments = content.GetProperty("arguments");
             
-            string snippetName = data?.arguments?.snippetName;
-            string content = data?.arguments?.content;
+            string snippetName = arguments.TryGetProperty(SnippetNameProperty, out var nameElement) 
+                ? nameElement.GetString() : string.Empty;
+            string snippetContent = arguments.TryGetProperty(SnippetContentProperty, out var contentElement) 
+                ? contentElement.GetString() : string.Empty;
 
             if (string.IsNullOrEmpty(snippetName))
             {
-                snippetContent = null;
+                file = null;
                 return "No snippet name provided";
             }
 
-            if (string.IsNullOrEmpty(content))
+            if (string.IsNullOrEmpty(snippetContent))
             {
-                snippetContent = null;
+                file = null;
                 return "No snippet content provided";
             }
 
-            snippetContent = content;
-            _logger.LogInformation($"Saved snippet: {content}");
+            file = snippetContent;
+            _logger.LogInformation($"Saved snippet: {snippetContent}");
             return $"Snippet '{snippetName}' saved successfully";
         }
     }
