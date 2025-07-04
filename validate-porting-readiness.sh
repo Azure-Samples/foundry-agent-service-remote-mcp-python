@@ -86,8 +86,8 @@ echo "----------------------------"
 # Check documentation
 validate "Main README exists" "$([ -f "README.md" ] && echo true || echo false)"
 validate "AI Foundry integration docs exist" "$([ -f "AI-FOUNDRY-INTEGRATION.md" ] && echo true || echo false)"
-validate "Porting prompt created" "$([ -f "PORTING_PROMPT.md" ] && echo true || echo false)"
-validate "Multi-language README created" "$([ -f "MULTI_LANGUAGE_README.md" ] && echo true || echo false)"
+validate "Porting prompt created" "$([ -f ".github/prompts/PORTING_PROMPT.md" ] && echo true || echo false)"
+validate "Multi-language README created" "$([ -f ".github/prompts/MULTI_LANGUAGE_README.md" ] && echo true || echo false)"
 validate "README mentions other language versions" "$(grep -q "\.NET\|JavaScript\|TypeScript" README.md && echo true || echo false)"
 
 echo -e "\n${BLUE}🔧 Development Environment Validation${NC}"
@@ -112,28 +112,28 @@ echo -e "\n${BLUE}📝 Porting Documentation Validation${NC}"
 echo "-----------------------------------"
 
 # Check porting documentation completeness
-validate "Porting prompt has .NET section" "$(grep -q "\.NET/C#" PORTING_PROMPT.md && echo true || echo false)"
-validate "Porting prompt has JavaScript section" "$(grep -q "JavaScript/TypeScript" PORTING_PROMPT.md && echo true || echo false)"
-validate "Architecture overview documented" "$(grep -q "Architecture Overview" PORTING_PROMPT.md && echo true || echo false)"
-validate "Infrastructure porting guidance included" "$(grep -q "Infrastructure Updates" PORTING_PROMPT.md && echo true || echo false)"
-validate "Development experience documented" "$(grep -q "Development Experience" PORTING_PROMPT.md && echo true || echo false)"
-validate "Quality assurance requirements specified" "$(grep -q "Quality Assurance" PORTING_PROMPT.md && echo true || echo false)"
+validate "Porting prompt has .NET section" "$(grep -q "\.NET/C#" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Porting prompt has JavaScript section" "$(grep -q "JavaScript/TypeScript" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Architecture overview documented" "$(grep -q "Architecture Overview" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Infrastructure porting guidance included" "$(grep -q "Infrastructure Updates" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Development experience documented" "$(grep -q "Development Experience" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Quality assurance requirements specified" "$(grep -q "Quality Assurance" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
 
 echo -e "\n${BLUE}🔗 Repository Link Validation${NC}"
 echo "-----------------------------"
 
 # Check target repository links
-validate "Mentions .NET target repository" "$(grep -q "foundry-agent-service-remote-mcp-dotnet" PORTING_PROMPT.md && echo true || echo false)"
-validate "Mentions JavaScript target repository" "$(grep -q "foundry-agent-service-remote-mcp-javascript" PORTING_PROMPT.md && echo true || echo false)"
+validate "Mentions .NET target repository" "$(grep -q "foundry-agent-service-remote-mcp-dotnet" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Mentions JavaScript target repository" "$(grep -q "foundry-agent-service-remote-mcp-javascript" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
 
 echo -e "\n${BLUE}📊 Implementation Detail Validation${NC}"
 echo "-----------------------------------"
 
 # Check implementation details are captured
-validate "Blob path pattern documented" "$(grep -q "snippets/{mcptoolargs" PORTING_PROMPT.md && echo true || echo false)"
-validate "Tool properties pattern documented" "$(grep -q "toolProperties" PORTING_PROMPT.md && echo true || echo false)"
-validate "Authentication patterns documented" "$(grep -q "DefaultAzureCredential\|managed.identity" PORTING_PROMPT.md && echo true || echo false)"
-validate "Runtime versions specified" "$(grep -q "version.*8\.0\|version.*20" PORTING_PROMPT.md && echo true || echo false)"
+validate "Blob path pattern documented" "$(grep -q "snippets/{mcptoolargs" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Tool properties pattern documented" "$(grep -q "toolProperties" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Authentication patterns documented" "$(grep -q "DefaultAzureCredential\|managed.identity" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
+validate "Runtime versions specified" "$(grep -q "version.*8\.0\|version.*20" .github/prompts/PORTING_PROMPT.md && echo true || echo false)"
 
 echo -e "\n================================================================"
 echo -e "${BLUE}📋 Validation Summary${NC}"

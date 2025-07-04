@@ -74,8 +74,8 @@ echo "----------------------------"
 
 validate "Main README exists" "[ -f 'README.md' ]"
 validate "AI Foundry integration docs exist" "[ -f 'AI-FOUNDRY-INTEGRATION.md' ]"
-validate "Porting prompt created" "[ -f 'PORTING_PROMPT.md' ]"
-validate "Multi-language README created" "[ -f 'MULTI_LANGUAGE_README.md' ]"
+validate "Porting prompt created" "[ -f '.github/prompts/PORTING_PROMPT.md' ]"
+validate "Multi-language README created" "[ -f '.github/prompts/MULTI_LANGUAGE_README.md' ]"
 
 echo -e "\n${BLUE}🔍 Environment Variables Validation${NC}"
 echo "-----------------------------------"
@@ -88,10 +88,10 @@ validate "MCP_EXTENSION_KEY documented" "grep -q 'MCP_EXTENSION_KEY' src/agent/.
 echo -e "\n${BLUE}📝 Porting Documentation Validation${NC}"
 echo "-----------------------------------"
 
-validate "Porting prompt has .NET section" "grep -q '\.NET\|dotnet' PORTING_PROMPT.md"
-validate "Porting prompt has JavaScript section" "grep -q 'JavaScript\|TypeScript' PORTING_PROMPT.md"
-validate "Architecture overview documented" "grep -q 'Architecture' PORTING_PROMPT.md"
-validate "Infrastructure guidance included" "grep -q 'Infrastructure' PORTING_PROMPT.md"
+validate "Porting prompt has .NET section" "grep -q '\.NET\|dotnet' .github/prompts/PORTING_PROMPT.md"
+validate "Porting prompt has JavaScript section" "grep -q 'JavaScript\|TypeScript' .github/prompts/PORTING_PROMPT.md"
+validate "Architecture overview documented" "grep -q 'Architecture' .github/prompts/PORTING_PROMPT.md"
+validate "Infrastructure guidance included" "grep -q 'Infrastructure' .github/prompts/PORTING_PROMPT.md"
 
 echo -e "\n================================================================"
 echo -e "${BLUE}📋 Validation Summary${NC}"
