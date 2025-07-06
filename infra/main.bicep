@@ -277,8 +277,8 @@ module api './app/api.bicep' = {
     tags: tags
     applicationInsightsName: monitoring.outputs.name
     appServicePlanId: appServicePlan.outputs.resourceId
-    runtimeName: 'python'
-    runtimeVersion: '3.12'
+    runtimeName: 'dotnet'
+    runtimeVersion: '8.0'
     storageAccountName: storage.outputs.name
     enableBlob: storageEndpointConfig.enableBlob
     enableQueue: storageEndpointConfig.enableQueue
