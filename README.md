@@ -159,13 +159,15 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
    dotnet run
    ```
 
-   The .NET implementation demonstrates the complete Azure AI Foundry agent workflow structure, including:
-   - ✅ Azure authentication and project connectivity
-   - ✅ MCP tool configuration setup
-   - ✅ Environment validation and logging
-   - ✅ Agent workflow structure demonstration
-   
-   **Current Status**: The implementation is architecturally complete and ready for immediate completion once the Azure.AI.Agents .NET package (equivalent to the Python azure-ai-agents package) becomes available.
+   The .NET implementation provides a complete Azure AI Foundry agent workflow using the Azure.AI.Agents.Persistent v1.1.0-beta.3 package, including:
+   - ✅ **Complete agent lifecycle**: Agent creation, thread management, and run execution
+   - ✅ **Tool call handling**: Supports function tools and MCP tool integration structure
+   - ✅ **Environment validation**: Configuration validation and secure credential handling
+   - ✅ **Comprehensive logging**: Detailed workflow monitoring and error handling
+   - ✅ **Resource cleanup**: Proper resource management and cleanup
+   - 🔄 **MCP integration**: Structure ready for MCP tool configuration
+
+   **Current Status**: The implementation demonstrates the complete agent workflow. MCP tools will be integrated using the exact pattern from the Python implementation once the specific MCP tool definition class is identified in the Azure.AI.Agents.Persistent package.
 
 ### Connect to remote MCP server in MCP Inspector
 For MCP Inspector, you can include the key in the URL: 
