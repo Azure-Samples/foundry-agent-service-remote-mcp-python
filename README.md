@@ -49,6 +49,12 @@ azd up
 
 > **Note**: You'll be prompted to specify an `agentLocation` during deployment. This must be one of the [AI Foundry supported regions](https://learn.microsoft.com/en-us/azure/foundry/reference/region-support#foundry-projects). This location is used specifically for AI resources (AI Services, Search, Cosmos DB) and can be different from your main deployment location.
 
+> **⚠️ Region Capacity**: Some regions may not have capacity for all required resources. For example:
+> - `eastus2` may be out of capacity for Azure AI Search
+> - `eastus` may be out of capacity for Cosmos DB (availability zone accounts)
+>
+> If you encounter `InsufficientResourcesAvailable` or `ServiceUnavailable` errors during provisioning, try a different region (e.g., `swedencentral`, `westeurope`).
+
 Additionally, [API Management]() can be used for improved security and policies over your MCP Server, and [App Service built-in authentication](https://learn.microsoft.com/azure/app-service/overview-authentication-authorization) can be used to set up your favorite OAuth provider including Entra.  
 
 ## Connect to your *remote* MCP server function app from a client
@@ -60,13 +66,13 @@ Your client will need a key in order to invoke the new hosted MCP endpoint, whic
 1. Change to the agent folder in a new terminal window:
 
    ```shell
-   cd agent
+   cd src/agent
    ```
 
 2. Create a `.env` file based on the example provided. Copy the `.env.example` file:
 
    ```shell
-   copy .env.example .env
+   cp .env.example .env
    ```
 
 3. Edit the `.env` file with your deployed function app details:
@@ -93,6 +99,8 @@ Your client will need a key in order to invoke the new hosted MCP endpoint, whic
    ```shell
    pip install -r requirements.txt
    ```
+
+   > **Note**: The agent client uses `AgentsClient` from the `azure-ai-agents` package directly (not via `AIProjectClient`). MCP tool calls require explicit approval — the sample auto-approves them by submitting tool approvals when the run enters `requires_action` status.
 
 5. Run the agent service:
 
