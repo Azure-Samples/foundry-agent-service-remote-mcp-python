@@ -50,11 +50,33 @@ param location string
 
 @description('Location for AI Foundry resources (AI Services, Search, Cosmos DB, etc.)')
 @allowed([
-  'westus'
-  'westus2'
-  'uaenorth'
+  'australiaeast'
+  'brazilsouth'
+  'canadacentral'
+  'centralindia'
+  'centralus'
+  'eastasia'
+  'eastus'
+  'eastus2'
+  'francecentral'
+  'germanywestcentral'
+  'italynorth'
+  'japaneast'
+  'koreacentral'
+  'northcentralus'
+  'northeurope'
+  'norwayeast'
+  'southafricanorth'
+  'southcentralus'
+  'southeastasia'
   'southindia'
-  'switzerlandnorth'
+  'spaincentral'
+  'swedencentral'
+  'uaenorth'
+  'uksouth'
+  'westeurope'
+  'westus'
+  'westus3'
 ])
 param agentLocation string
 
@@ -395,4 +417,4 @@ output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 // AI Foundry outputs
 output PROJECT_ENDPOINT string = aiProject.outputs.projectEndpoint
 output MODEL_DEPLOYMENT_NAME string = modelName
-output MCP_SERVER_URL string = 'https://${api.outputs.SERVICE_API_NAME}.azurewebsites.net/runtime/webhooks/mcp/sse'
+output MCP_SERVER_URL string = 'https://${api.outputs.SERVICE_API_NAME}.azurewebsites.net/runtime/webhooks/mcp'

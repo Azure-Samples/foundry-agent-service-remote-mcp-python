@@ -31,8 +31,8 @@ Below is the architecture diagram for the Remote MCP Server using Azure Function
 
 ## Prerequisites
 
-+ [Python](https://www.python.org/downloads/) version 3.11 or higher
-+ [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local?pivots=programming-language-python#install-the-azure-functions-core-tools) >= `4.0.7030`
++ [Python](https://www.python.org/downloads/) version 3.13 or higher
++ [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local?pivots=programming-language-python#install-the-azure-functions-core-tools) >= `4.8.0`
 + [Azure Developer CLI](https://aka.ms/azd)
 + To use Visual Studio Code to run and debug locally:
   + [Visual Studio Code](https://code.visualstudio.com/)
@@ -47,13 +47,13 @@ Run this [azd](https://aka.ms/azd) command to provision the function app, with a
 azd up
 ```
 
-> **Note**: You'll be prompted to specify an `agentLocation` during deployment. This must be one of the AI Foundry supported regions: `westus`, `westus2`, `uaenorth`, `southindia`, or `switzerlandnorth`. This location is used specifically for AI resources (AI Services, Search, Cosmos DB) and can be different from your main deployment location.
+> **Note**: You'll be prompted to specify an `agentLocation` during deployment. This must be one of the [AI Foundry supported regions](https://learn.microsoft.com/en-us/azure/foundry/reference/region-support#foundry-projects). This location is used specifically for AI resources (AI Services, Search, Cosmos DB) and can be different from your main deployment location.
 
 Additionally, [API Management]() can be used for improved security and policies over your MCP Server, and [App Service built-in authentication](https://learn.microsoft.com/azure/app-service/overview-authentication-authorization) can be used to set up your favorite OAuth provider including Entra.  
 
 ## Connect to your *remote* MCP server function app from a client
 
-Your client will need a key in order to invoke the new hosted SSE endpoint, which will be of the form `https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse`. The hosted function requires a system key by default which can be obtained from the [portal](https://learn.microsoft.com/azure/azure-functions/function-keys-how-to?tabs=azure-portal) or the CLI (`az functionapp keys list --resource-group <resource_group> --name <function_app_name>`). Obtain the system key named `mcp_extension`.
+Your client will need a key in order to invoke the new hosted MCP endpoint, which will be of the form `https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp`. The hosted function requires a system key by default which can be obtained from the [portal](https://learn.microsoft.com/azure/azure-functions/function-keys-how-to?tabs=azure-portal) or the CLI (`az functionapp keys list --resource-group <resource_group> --name <function_app_name>`). Obtain the system key named `mcp_extension`.
 
 ### Foundry Agent Service Client
 
@@ -76,7 +76,7 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
    PROJECT_ENDPOINT=https://your-agent-service-resource.services.ai.azure.com/api/projects/your-project-name
    MODEL_DEPLOYMENT_NAME=gpt-4.1-mini
    MCP_SERVER_LABEL=Azure_Functions_MCP_Server
-   MCP_SERVER_URL=https://<your-funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse
+   MCP_SERVER_URL=https://<your-funcappname>.azurewebsites.net/runtime/webhooks/mcp
    USER_MESSAGE=Create a snippet called snippet1 that prints 'Hello, World!' in Python.
 
    # Required: Azure Functions extension key for MCP server authentication
@@ -105,7 +105,7 @@ Your client will need a key in order to invoke the new hosted SSE endpoint, whic
 ### Connect to remote MCP server in MCP Inspector
 For MCP Inspector, you can include the key in the URL: 
 ```plaintext
-https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse?code=<your-mcp-extension-system-key>
+https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp?code=<your-mcp-extension-system-key>
 ```
 
 ## Redeploy your code
@@ -122,6 +122,10 @@ When you're done working with your function app and related resources, you can u
 ```shell
 azd down
 ```
+
+## More MCP Server Samples
+
+For additional samples showcasing the latest MCP server features on Azure Functions (including prompts, resources, and more tools), see the [remote-mcp-functions-python](https://github.com/Azure-Samples/remote-mcp-functions-python) repository.
 
 ## Helpful Azure Commands
 
@@ -178,7 +182,7 @@ An Azure Storage Emulator is needed for this particular sample because we will s
    func start
    ```
 
-> **Note** by default this will use the webhooks route: `/runtime/webhooks/mcp/sse`.  Later we will use this in Azure to set the key on client/host calls: `/runtime/webhooks/mcp/sse?code=<system_key>`
+> **Note** by default this will use the webhooks route: `/runtime/webhooks/mcp`.  Later we will use this in Azure to set the key on client/host calls: `/runtime/webhooks/mcp?code=<system_key>`
 
 ## Connect to the *local* MCP server from a client/host
 
@@ -195,11 +199,11 @@ The Foundry Agent Service is a cloud service that expects MCP tools that are als
     ```
 
 2. CTRL click to load the MCP Inspector web app from the URL displayed by the app (e.g. http://0.0.0.0:5173/#resources)
-3. Set the transport type to `SSE`
-4. Set the URL to your running Function app's SSE endpoint and **Connect**:
+3. Set the transport type to `Streamable HTTP`
+4. Set the URL to your running Function app's MCP endpoint and **Connect**:
 
     ```shell
-    http://0.0.0.0:7071/runtime/webhooks/mcp/sse
+    http://0.0.0.0:7071/runtime/webhooks/mcp
     ```
 
 >**Note** this step will not work in CodeSpaces.  Please move on to Deploy to Remote MCP.  
@@ -213,85 +217,49 @@ Here's the actual code from the function_app.py file:
 
 ```python
 
-@app.generic_trigger(arg_name="context", type="mcpToolTrigger", toolName="hello", 
-                     description="Hello world.", 
-                     toolProperties="[]")
-def hello_mcp(context) -> None:
-    """
-    A simple function that returns a greeting message.
-
-    Args:
-        context: The trigger context (not used in this function).
-
-    Returns:
-        str: A greeting message.
-    """
+@app.mcp_tool()
+def hello_mcp() -> str:
+    """Hello world."""
     return "Hello I am MCPTool!"
 
 
-@app.generic_trigger(
-    arg_name="context",
-    type="mcpToolTrigger",
-    toolName="getsnippet",
-    description="Retrieve a snippet by name.",
-    toolProperties=tool_properties_get_snippets_json
-)
-@app.generic_input_binding(
-    arg_name="file",
-    type="blob",
-    connection="AzureWebJobsStorage",
-    path=_BLOB_PATH
-)
-def get_snippet(file: func.InputStream, context) -> str:
-    """
-    Retrieves a snippet by name from Azure Blob Storage.
- 
-    Args:
-        file (func.InputStream): The input binding to read the snippet from Azure Blob Storage.
-        context: The trigger context containing the input arguments.
- 
-    Returns:
-        str: The content of the snippet or an error message.
-    """
+@app.mcp_tool()
+@app.mcp_tool_property(arg_name="snippetname", description="The name of the snippet.")
+@app.blob_input(arg_name="file", connection="AzureWebJobsStorage", path=_BLOB_PATH)
+def get_snippet(file: func.InputStream, snippetname: str) -> str:
+    """Retrieve a snippet by name from Azure Blob Storage."""
     snippet_content = file.read().decode("utf-8")
     logging.info(f"Retrieved snippet: {snippet_content}")
     return snippet_content
 
 
-@app.generic_trigger(
-    arg_name="context",
-    type="mcpToolTrigger",
-    toolName="savesnippet",
-    description="Save a snippet with a name.",
-    toolProperties=tool_properties_save_snippets_json
-)                   
-@app.generic_output_binding(
-    arg_name="file",
-    type="blob",
-    connection="AzureWebJobsStorage",
-    path=_BLOB_PATH
-)
-def save_snippet(file: func.Out[str], context) -> str:
-    content = json.loads(context)
-    snippet_name_from_args = content["arguments"][_SNIPPET_NAME_PROPERTY_NAME]
-    snippet_content_from_args = content["arguments"][_SNIPPET_PROPERTY_NAME]
-
-    if not snippet_name_from_args:
+@app.mcp_tool()
+@app.mcp_tool_property(arg_name="snippetname", description="The name of the snippet.")
+@app.mcp_tool_property(arg_name="snippet", description="The content of the snippet.")
+@app.blob_output(arg_name="file", connection="AzureWebJobsStorage", path=_BLOB_PATH)
+def save_snippet(file: func.Out[str], snippetname: str, snippet: str) -> str:
+    """Save a snippet with a name to Azure Blob Storage."""
+    if not snippetname:
         return "No snippet name provided"
 
-    if not snippet_content_from_args:
+    if not snippet:
         return "No snippet content provided"
- 
-    file.set(snippet_content_from_args)
-    logging.info(f"Saved snippet: {snippet_content_from_args}")
-    return f"Snippet '{snippet_content_from_args}' saved successfully"
+
+    file.set(snippet)
+    logging.info(f"Saved snippet: {snippet}")
+    return f"Snippet '{snippet}' saved successfully"
 ```
 
-Note that the `host.json` file also includes a reference to the experimental bundle, which is required for apps using this feature:
+The MCP decorators automatically:
+- Infer tool properties from function signatures and type hints
+- Handle JSON serialization
+- Expose the functions as MCP tools without manual configuration
+
+Note that the `host.json` file includes the extension bundle configuration:
 
 ```json
 "extensionBundle": {
-  "id": "Microsoft.Azure.Functions.ExtensionBundle.Experimental",
+  "id": "Microsoft.Azure.Functions.ExtensionBundle",
   "version": "[4.*, 5.0.0)"
 }
 ```
